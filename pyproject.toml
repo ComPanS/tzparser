@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tzparser"
+version = "0.1.0"
+description = "Парсер данных по банкротству с Fedresurs.ru и Kad.arbitr.ru"
+requires-python = ">=3.11"
+dependencies = [
+    "camoufox[geoip]>=0.1.0",
+    "nodriver>=0.40.0",
+    "sqlalchemy>=2.0.0",
+    "openpyxl>=3.1.0",
+    "python-dotenv>=1.0.0",
+    "psycopg2-binary>=2.9.0",
+]
