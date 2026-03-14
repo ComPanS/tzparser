@@ -29,18 +29,8 @@ RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "2.0"))
 PAGE_TIMEOUT_MS = int(os.getenv("PAGE_TIMEOUT_MS", "30000"))
 HEADLESS = os.getenv("HEADLESS", "true").lower() in ("1", "true", "yes")
 
-# Обход блокировок (прокси, путь к Chrome в Docker)
+# Прокси (для Camoufox)
 PROXY_URL = os.getenv("PROXY_URL")  # http://user:pass@host:port или socks5://...
-CHROME_BINARY_PATH = os.getenv("CHROME_BINARY_PATH", "").strip()  # /usr/bin/chromium в Docker
-
-# Camoufox — Firefox-based anti-detect (рекомендуется при блокировках)
-USE_CAMOUFOX_PARSER = os.getenv("USE_CAMOUFOX_PARSER", "false").lower() in ("1", "true", "yes")
-
-# Tor + FlareSolverr (единый способ обхода блокировки fedresurs.ru)
-USE_TOR_PARSER = os.getenv("USE_TOR_PARSER", "true").lower() in ("1", "true", "yes")
-TOR_PROXY = os.getenv("TOR_PROXY", "socks5://127.0.0.1:9050")
-TOR_CONTROL_PORT = int(os.getenv("TOR_CONTROL_PORT", "9051"))
-FLARESOLVERR_URL = os.getenv("FLARESOLVERR_URL", "http://localhost:8191/v1").rstrip("/")
 
 # Пути
 BASE_DIR = Path(__file__).parent.parent

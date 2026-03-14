@@ -9,7 +9,6 @@ description = "Парсер данных по банкротству с Fedresur
 requires-python = ">=3.11"
 dependencies = [
     "camoufox[geoip]>=0.1.0",
-    "nodriver>=0.40.0",
     "sqlalchemy>=2.0.0",
     "openpyxl>=3.1.0",
     "python-dotenv>=1.0.0",

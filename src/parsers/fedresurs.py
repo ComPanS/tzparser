@@ -1,32 +1,23 @@
 """
-Парсер Fedresurs.ru — данные по банкротству по ИНН.
-
-USE_CAMOUFOX_PARSER=true: Camoufox (Firefox-based anti-detect, рекомендуется).
-USE_TOR_PARSER=true: Tor + FlareSolverr + undetected-chromedriver.
-USE_TOR_PARSER=false: nodriver (резерв).
+Парсер Fedresurs.ru — данные по банкротству по ИНН (Camoufox).
 
 Алгоритм (из ТЗ):
 1. Вставить ИНН в колонку поиска
 2. Пройти по стрелочке «Вся информация»
 3. На вкладке «Сведения о банкротстве» — № дела и последняя дата
 """
-import asyncio
 import logging
-from datetime import date
+import random
+import re
+from datetime import date, datetime
 from typing import NamedTuple, Optional
 
-from src.config import (
-    CHROME_BINARY_PATH,
-    FLARESOLVERR_URL,
-    HEADLESS,
-    TOR_CONTROL_PORT,
-    TOR_PROXY,
-    USE_CAMOUFOX_PARSER,
-    USE_TOR_PARSER,
-)
+from src.parsers.base_camoufox import BaseCamoufoxParser
 from src.utils.agents import get_random_agent
 
 logger = logging.getLogger(__name__)
+
+FEDRESURS_URL = "https://fedresurs.ru/"
 
 
 class FedresursData(NamedTuple):
@@ -37,57 +28,121 @@ class FedresursData(NamedTuple):
     last_date: Optional[date]
 
 
-def _create_parser(user_agent: Optional[str] = None):
-    """Создаёт парсер в зависимости от USE_CAMOUFOX_PARSER и USE_TOR_PARSER."""
-    agent = user_agent or get_random_agent()
-    if USE_CAMOUFOX_PARSER:
-        from src.parsers.fedresurs_camoufox import FedresursCamoufoxParser
-
-        return FedresursCamoufoxParser(user_agent=agent), False
-    elif USE_TOR_PARSER:
-        from src.parsers.fedresurs_tor import FedresursTorParser
-
-        return FedresursTorParser(
-            tor_proxy=TOR_PROXY,
-            tor_control_port=TOR_CONTROL_PORT,
-            flaresolverr_url=FLARESOLVERR_URL,
-            headless=HEADLESS,
-            chrome_path=CHROME_BINARY_PATH or None,
-            user_agent=agent,
-        ), True
-    else:
-        from src.parsers.fedresurs_nodriver import FedresursNodriverParser
-
-        return FedresursNodriverParser(user_agent=agent), False
-
-
-class FedresursParser:
-    """
-    Парсер Fedresurs.ru по ИНН.
-
-    USE_CAMOUFOX_PARSER=true: Camoufox (рекомендуется при блокировках).
-    USE_TOR_PARSER=true: Tor + curl_cffi + undetected-chromedriver + FlareSolverr.
-    USE_TOR_PARSER=false: nodriver (резерв).
-    """
+class FedresursParser(BaseCamoufoxParser):
+    """Парсер Fedresurs.ru по ИНН (Camoufox)."""
 
     def __init__(self, user_agent: Optional[str] = None):
-        self.user_agent = user_agent or get_random_agent()
-        self._parser, self._use_tor = _create_parser(self.user_agent)
+        super().__init__(user_agent=user_agent or get_random_agent())
 
     async def parse(self, inn: str) -> FedresursData:
         """Парсит данные по банкротству для указанного ИНН."""
-        if self._use_tor:
-            loop = asyncio.get_event_loop()
-            result = await loop.run_in_executor(None, self._parser.parse, inn)
-            return FedresursData(
-                inn=result["inn"],
-                case_number=result["case_number"],
-                last_date=result["last_date"],
-            )
-        else:
-            return await self._parser.parse(inn)
+        await self._delay_between_requests()
+        return await self._retry(self._do_parse, inn)
 
-    async def close(self) -> None:
-        """Закрытие ресурсов."""
-        if hasattr(self._parser, "close"):
-            await self._parser.close()
+    async def _do_search_and_click_all_info(self, page, inn: str) -> bool:
+        """
+        Выполняет поиск и клик «Вся информация».
+        Возвращает True при успехе, False при неудаче (overlay перехватывает клик).
+        """
+        search_input_selector = "input[formcontrolname='searchString']"
+        await self._human_type(page, search_input_selector, inn)
+        await self._sleep(page, 1.5)
+
+        await self._click_selector(page, ".el-button", timeout=15)
+        await self._sleep(page, 2)
+
+        # Ждём исчезновения overlay page-loading
+        try:
+            await page.locator(".page-loading").wait_for(state="hidden", timeout=15000)
+        except Exception:
+            pass
+        await self._sleep(page, 1)
+
+        el = await self._find_by_text(page, "Вся информация")
+        if not el:
+            return False
+        await self._before_action(page)
+        await el.scroll_into_view_if_needed()
+        await self._sleep(page, 0.3)
+
+        try:
+            await el.click(timeout=10000)
+            return True
+        except Exception:
+            return False
+
+    async def _do_parse(self, inn: str) -> FedresursData:
+        """Async реализация парсинга с Camoufox."""
+        page = None
+        try:
+            browser = await self._get_browser()
+            page = await browser.new_page()
+            await page.goto(FEDRESURS_URL)
+            await self._sleep(page, 1.5)
+
+            # Поиск + клик «Вся информация»; при неудаче — обновить и повторить 1 раз
+            ok = await self._do_search_and_click_all_info(page, inn)
+            if not ok:
+                logger.info("Overlay перехватил клик, обновляю страницу и повторяю 1 раз...")
+                await page.goto(FEDRESURS_URL)
+                await self._sleep(page, 2)
+                ok = await self._do_search_and_click_all_info(page, inn)
+            if not ok:
+                raise ValueError("Элемент 'Вся информация' не найден или overlay блокирует клик")
+
+            await self._sleep(page, 5)
+
+            # Плавная хаотичная прокрутка к блоку банкротства
+            await self._human_scroll_down(page, total_px=random.randint(600, 950))
+
+            # Прокрутка к блоку банкротства
+            bankruptcy_locator = page.locator("entity-card-bankruptcy-publication-wrapper")
+            await bankruptcy_locator.first.wait_for(state="attached", timeout=30000)
+            await bankruptcy_locator.first.scroll_into_view_if_needed()
+            await self._sleep(page, 0.5)
+
+            # № дела в <a class="underlined info-header">
+            case_number_el = await self._find_element(page, "a.underlined.info-header")
+            case_number = None
+            if case_number_el:
+                await case_number_el.scroll_into_view_if_needed()
+                await self._sleep(page, 0.2)
+                raw = await case_number_el.inner_text()
+                case_number = (raw or "").strip() or None
+
+            last_date = None
+            wrappers = await self._find_elements(page, "entity-card-bankruptcy-publication-wrapper")
+            if wrappers:
+                first_wrapper = wrappers[0]
+                await first_wrapper.scroll_into_view_if_needed()
+                await self._sleep(page, 0.2)
+                underlined = first_wrapper.locator("a.underlined")
+                if await underlined.count() > 0:
+                    raw_text = await underlined.first.inner_text()
+                    if raw_text:
+                        raw_text = raw_text.strip()
+                        match = re.search(r"(\d{2}\.\d{2}\.\d{4})", raw_text)
+                        if match:
+                            date_str = match.group(1)
+                            try:
+                                last_date = datetime.strptime(date_str, "%d.%m.%Y").date()
+                            except ValueError:
+                                logger.warning(
+                                    "Не удалось распарсить дату '%s' для ИНН %s",
+                                    raw_text,
+                                    inn,
+                                )
+            return FedresursData(
+                inn=inn,
+                case_number=case_number,
+                last_date=last_date,
+            )
+        except Exception as e:
+            logger.warning("ИНН не найден или ошибка парсинга %s: %s", inn, e)
+            return FedresursData(inn=inn, case_number=None, last_date=None)
+        finally:
+            if page is not None:
+                try:
+                    await page.close()
+                except Exception:
+                    pass

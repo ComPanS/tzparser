@@ -6,32 +6,22 @@
 
 ## 1. Fedresurs.ru — селекторы
 
-Откройте https://fedresurs.ru/ в браузере, включите DevTools (F12) → вкладка Elements. Найдите элементы и скопируйте селекторы.
-
-| Файл                       | Место                     | Описание                         | Как найти                                                          |
-| -------------------------- | ------------------------- | -------------------------------- | ------------------------------------------------------------------ |
-| `src/parsers/fedresurs.py` | `search_input_selector`   | Поле поиска ИНН                  | Найдите поле ввода, проверьте `id`, `name`, `placeholder`, `class` |
-| `src/parsers/fedresurs.py` | `search_button_selector`  | Кнопка поиска / стрелка          | Кнопка «Найти» или стрелка для перехода к результатам              |
-| `src/parsers/fedresurs.py` | `bankruptcy_tab_selector` | Вкладка «Сведения о банкротстве» | Таб/ссылка с текстом «Сведения о банкротстве»                      |
-| `src/parsers/fedresurs.py` | `case_number_selector`    | № дела                           | Элемент с номером дела (таблица, span, div)                        |
-| `src/parsers/fedresurs.py` | `last_date_selector`      | Последняя дата                   | Элемент с датой последнего события                                 |
-
-**Пример:** если поле имеет `id="searchInn"`, то селектор: `#searchInn`.
+Селекторы в `src/parsers/fedresurs.py`:
+- Поле поиска ИНН: `input[formcontrolname='searchString']`
+- Кнопка поиска: `.el-button`
+- «Вся информация» — по тексту
+- № дела: `a.underlined.info-header`
+- Дата: `entity-card-bankruptcy-publication-wrapper` → `a.underlined`
 
 ---
 
 ## 2. Kad.arbitr.ru — селекторы
 
-Откройте https://kad.arbitr.ru/ в браузере, DevTools → Elements.
-
-| Файл                        | Место                          | Описание                     | Как найти                                                    |
-| --------------------------- | ------------------------------ | ---------------------------- | ------------------------------------------------------------ |
-| `src/parsers/kad_arbitr.py` | `search_input_selector`        | Поле поиска № дела           | Поле «Номер дела» (id, name, placeholder)                    |
-| `src/parsers/kad_arbitr.py` | `search_button_selector`       | Кнопка поиска                | Кнопка «Найти»                                               |
-| `src/parsers/kad_arbitr.py` | `case_link_selector`           | Ссылка на дело в результатах | Ссылка в таблице результатов (может зависеть от номера дела) |
-| `src/parsers/kad_arbitr.py` | `electronic_case_tab_selector` | Вкладка «Электронное дело»   | Таб/ссылка с текстом «Электронное дело»                      |
-| `src/parsers/kad_arbitr.py` | `last_date_selector`           | Последняя дата документа     | Дата в таблице документов                                    |
-| `src/parsers/kad_arbitr.py` | `document_name_selector`       | Наименование документа       | Название документа в таблице                                 |
+Селекторы в `src/parsers/kad_arbitr.py`:
+- Поле поиска: `#sug-cases input`
+- Таблица результатов: `#b-cases tbody tr`
+- Вкладка «Электронное дело» — по тексту
+- Документы: `ul.b-case-chrono-ed.js-case-chrono-ed`
 
 ---
 
@@ -42,60 +32,9 @@
 | Имя листа     | `XLSX_SHEET_NAME` | Лист в xlsx (по умолчанию `Sheet1`)    |
 | Колонка с ИНН | `XLSX_INN_COLUMN` | Заголовок колонки (по умолчанию `ИНН`) |
 
-Убедитесь, что в xlsx:
-
-- Первая строка содержит заголовки
-- Имя колонки с ИНН совпадает с `XLSX_INN_COLUMN`
-
 ---
 
-## 4. Возможные доработки
-
-### CAPTCHA
-
-Если сайты показывают CAPTCHA:
-
-- Парсер уже логирует и делает паузу 60 сек
-- Для автоматического обхода потребуется сервис распознавания CAPTCHA (2captcha, anti-captcha и т.п.)
-
-### Блокировка по IP
-
-- Добавьте прокси через `PROXY_URL` в `.env` или переменные окружения.
-- Прокси передаётся в `SB(proxy=PROXY_URL)` в `src/parsers/base.py`.
-
-### Авторизация
-
-Если потребуется доступ:
-
-- Добавьте cookies или токены в контекст браузера
-- Либо реализуйте логин перед парсингом
-
-### Формат даты
-
-Если даты на сайте в другом формате (например, `YYYY-MM-DD`), измените `strptime` в `fedresurs.py` и `kad_arbitr.py`:
-
-```python
-datetime.strptime(last_date_str, "%Y-%m-%d").date()
-```
-
----
-
-## 5. Тестовые данные
-
-Для проверки используйте:
-
-- **ИНН:** `231138771115` (из ТЗ)
-- **№ дела:** `А32-28873/2024` (из ТЗ)
-
-Запустите парсер с одним ИНН и проверьте, что селекторы корректно извлекают данные.
-
----
-
-## 6. Обход блокировок Fedresurs
-
-### Рекомендуемый способ: Camoufox
-
-**Camoufox** — Firefox-based anti-detect браузер, обходит Cloudflare и тяжёлые антиботы.
+## 4. Обход блокировок (Camoufox)
 
 ```bash
 pip install camoufox[geoip]
@@ -104,26 +43,17 @@ camoufox fetch  # скачать браузер
 
 | Переменная | Описание |
 | ---------- | -------- |
-| `USE_CAMOUFOX_PARSER=true` | Включить Camoufox для Fedresurs и Kad.arbitr |
 | `PROXY_URL` | Прокси (поддерживается с geoip) |
 | `HEADLESS=false` | Видимый браузер |
+| `DELAY_MIN` / `DELAY_MAX` | Пауза между запросами (сек) |
 
-### Альтернативы
+---
 
-| Способ | Как включить |
-| ------ | ------------ |
-| **Tor + FlareSolverr + undetected-chromedriver** | `USE_TOR_PARSER=true` |
-| **nodriver** | `USE_TOR_PARSER=false` |
-| **Прокси** | `PROXY_URL=http://user:pass@host:port` |
-| **Видимый браузер** | `HEADLESS=false` |
-| **Chrome binary** | `CHROME_BINARY_PATH=/usr/bin/chromium` (Docker) |
-| **Увеличенные паузы** | `DELAY_MIN=3` `DELAY_MAX=8` |
+## 5. Тестовые данные
 
-## 7. Краткий чек-лист перед запуском
+- **ИНН:** `231138771115` (из ТЗ)
+- **№ дела:** `А32-28873/2024` (из ТЗ)
 
-- [ ] Обновлены селекторы в `fedresurs.py`
-- [ ] Обновлены селекторы в `kad_arbitr.py`
-- [ ] Проверена структура xlsx (лист, колонка)
-- [ ] Проведён тест на 1–2 ИНН
-- [ ] При необходимости настроены прокси/авторизация
-- [ ] При блокировке: HEADLESS=false, CHROME_CHANNEL=chrome, прокси
+```bash
+python scripts/test_camoufox.py 231138771115 --headed
+```

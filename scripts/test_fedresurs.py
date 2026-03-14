@@ -14,7 +14,7 @@ from pathlib import Path
 # Добавляем корень проекта в PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Включить видимый браузер (до импорта, если передан --headed)
+os.environ["SKIP_INITIAL_DELAY"] = "true"
 if "--headed" in sys.argv:
     os.environ["HEADLESS"] = "false"
 
@@ -31,9 +31,10 @@ async def main():
     parser = FedresursParser(user_agent=get_random_agent())
     try:
         result = await parser.parse(inn)
-        print(f"ИНН:         {result.inn}")
-        print(f"№ дела:      {result.case_number}")
-        print(f"Последняя дата: {result.last_date}")
+        print(f"ИНН:            {result.inn}", flush=True)
+        print(f"№ дела:         {result.case_number}", flush=True)
+        last_date_str = result.last_date.strftime("%d.%m.%Y") if result.last_date else "—"
+        print(f"Последняя дата: {last_date_str}", flush=True)
     finally:
         await parser.close()
 

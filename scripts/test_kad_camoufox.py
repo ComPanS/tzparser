@@ -15,22 +15,21 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-os.environ["USE_CAMOUFOX_PARSER"] = "true"
 os.environ["SKIP_INITIAL_DELAY"] = "true"
 if "--headed" in sys.argv:
     os.environ["HEADLESS"] = "false"
 
-from src.parsers.kad_arbitr_camoufox import KadArbitrCamoufoxParser
+from src.parsers.kad_arbitr import KadArbitrParser
 from src.utils.agents import get_random_agent
 
 
 async def main():
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     case_number = args[0] if args else "А32-28873/2024"
-    print(f"Парсинг Kad.arbitr (Camoufox) для дела: {case_number}")
+    print(f"Парсинг Kad.arbitr для дела: {case_number}")
     print("-" * 50)
 
-    parser = KadArbitrCamoufoxParser(user_agent=get_random_agent())
+    parser = KadArbitrParser(user_agent=get_random_agent())
     try:
         result = await parser.parse(case_number)
         print(f"№ дела:           {result.case_number}", flush=True)

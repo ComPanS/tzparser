@@ -22,7 +22,6 @@ from src.config import (
     DATA_DIR,
     DEFAULT_XLSX_PATH,
     LOGS_DIR,
-    USE_CAMOUFOX_PARSER,
 )
 from src.db.session import get_session_factory, init_db
 from src.models.db_models import FedresursResult, KadArbitrResult
@@ -151,12 +150,7 @@ async def run_parser(xlsx_path: Path, resume: bool = True) -> None:
     logger.info("Выбран User-Agent: %s...", user_agent[:50])
 
     fedresurs = FedresursParser(user_agent=user_agent)
-    if USE_CAMOUFOX_PARSER:
-        from src.parsers.kad_arbitr_camoufox import KadArbitrCamoufoxParser
-
-        kad_arbitr = KadArbitrCamoufoxParser(user_agent=user_agent)
-    else:
-        kad_arbitr = KadArbitrParser(user_agent=user_agent)
+    kad_arbitr = KadArbitrParser(user_agent=user_agent)
     semaphore = asyncio.Semaphore(CONCURRENCY)
 
     try:

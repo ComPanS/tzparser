@@ -16,8 +16,6 @@ from pathlib import Path
 # Добавляем корень проекта в PYTHONPATH
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-# Включить Camoufox (до импорта)
-os.environ["USE_CAMOUFOX_PARSER"] = "true"
 # Без паузы 8–15 сек перед стартом (для быстрого теста)
 os.environ["SKIP_INITIAL_DELAY"] = "true"
 # Включить видимый браузер (если передан --headed)
