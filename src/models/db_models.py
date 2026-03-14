@@ -55,4 +55,5 @@ class KadArbitrResult(Base):
     case_number: Mapped[str] = mapped_column(index=True)
     last_date: Mapped[Optional[date]] = mapped_column(nullable=True)
     document_name: Mapped[Optional[str]] = mapped_column(nullable=True)
+    document_path: Mapped[Optional[str]] = mapped_column(nullable=True)
     parsed_at: Mapped[datetime] = mapped_column(default=datetime.utcnow)

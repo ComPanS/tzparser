@@ -8,6 +8,7 @@ Camoufox — Firefox-based anti-detect браузер с Playwright API.
 
 Реализует обёртку над Playwright API, совместимую с BaseParser.
 """
+
 import asyncio
 import logging
 import random

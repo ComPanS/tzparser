@@ -106,6 +106,7 @@ async def process_inn(
                             case_number=kad_data.case_number,
                             last_date=kad_data.last_date,
                             document_name=kad_data.document_name,
+                            document_path=kad_data.document_path,
                         )
                     )
                     session.commit()

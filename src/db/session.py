@@ -3,11 +3,33 @@
 
 Поддерживает SQLite и PostgreSQL через DATABASE_URL.
 """
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 from src.config import DATABASE_URL
 from src.models.db_models import Base
+
+
+def _migrate_document_path(engine):
+    """Добавляет колонку document_path в kad_arbitr_results, если её нет."""
+    with engine.connect() as conn:
+        try:
+            if "sqlite" in DATABASE_URL:
+                result = conn.execute(text("PRAGMA table_info(kad_arbitr_results)"))
+                columns = [row[1] for row in result]
+            else:
+                result = conn.execute(
+                    text(
+                        "SELECT column_name FROM information_schema.columns "
+                        "WHERE table_name = 'kad_arbitr_results'"
+                    )
+                )
+                columns = [row[0] for row in result]
+            if "document_path" not in columns:
+                conn.execute(text("ALTER TABLE kad_arbitr_results ADD COLUMN document_path TEXT"))
+                conn.commit()
+        except Exception:
+            pass
 
 
 def get_engine():
@@ -28,3 +50,7 @@ def init_db():
     """Создаёт таблицы в БД."""
     engine = get_engine()
     Base.metadata.create_all(bind=engine)
+    try:
+        _migrate_document_path(engine)
+    except Exception:
+        pass

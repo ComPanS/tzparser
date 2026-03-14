@@ -23,6 +23,7 @@ class KadArbitrData(NamedTuple):
     case_number: str
     last_date: Optional[date]
     document_name: Optional[str]
+    document_path: Optional[str] = None
 
 
 class KadArbitrParser(BaseParser):
@@ -119,6 +120,7 @@ class KadArbitrParser(BaseParser):
                     case_number=case_number,
                     last_date=last_date,
                     document_name=document_name,
+                    document_path=None,
                 )
             finally:
                 browser.stop()
@@ -132,4 +134,5 @@ class KadArbitrParser(BaseParser):
                 case_number=case_number,
                 last_date=None,
                 document_name=None,
+                document_path=None,
             )

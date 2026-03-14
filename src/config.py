@@ -47,6 +47,7 @@ BASE_DIR = Path(__file__).parent.parent
 DATA_DIR = BASE_DIR / "data"
 LOGS_DIR = BASE_DIR / "logs"
 DEFAULT_XLSX_PATH = DATA_DIR / "inns.xlsx"
+KAD_ARBITR_DOWNLOADS_DIR = DATA_DIR / "downloaded_files"
 
 # xlsx
 XLSX_SHEET_NAME = os.getenv("XLSX_SHEET_NAME", "Sheet1")

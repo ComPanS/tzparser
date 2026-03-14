@@ -13,6 +13,7 @@ nodriver — преемник undetected-chromedriver.
 - Retry с экспоненциальной задержкой
 - Поддержку прокси, пути к Chrome
 """
+
 import asyncio
 import logging
 import random
@@ -128,7 +129,9 @@ class BaseParser:
             elif random.random() < 0.15:
                 await tab.sleep(random.uniform(0.2, 0.5))
 
-    async def _click_selector(self, tab: uc.Tab, selector: str, timeout: int = 30) -> None:
+    async def _click_selector(
+        self, tab: uc.Tab, selector: str, timeout: int = 30
+    ) -> None:
         """Клик по CSS селектору."""
         await self._before_action(tab)
         el = await self._wait_for_selector(tab, selector, timeout=timeout)
