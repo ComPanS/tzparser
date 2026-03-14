@@ -97,7 +97,7 @@ class FedresursParser(BaseCamoufoxParser):
 
             # Прокрутка к блоку банкротства
             bankruptcy_locator = page.locator("entity-card-bankruptcy-publication-wrapper")
-            await bankruptcy_locator.first.wait_for(state="attached", timeout=30000)
+            await bankruptcy_locator.first.wait_for(state="attached", timeout=60000)
             await bankruptcy_locator.first.scroll_into_view_if_needed()
             await self._sleep(page, 0.5)
 
@@ -138,7 +138,8 @@ class FedresursParser(BaseCamoufoxParser):
                 last_date=last_date,
             )
         except Exception as e:
-            logger.warning("ИНН не найден или ошибка парсинга %s: %s", inn, e)
+            err_msg = str(e).split("\n")[0] if str(e) else str(type(e).__name__)
+            logger.warning("Номер дела не найден для ИНН %s: %s", inn, err_msg)
             return FedresursData(inn=inn, case_number=None, last_date=None)
         finally:
             if page is not None:

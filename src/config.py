@@ -26,7 +26,7 @@ DELAY_BETWEEN_REQUESTS_MAX = float(os.getenv("DELAY_MAX", "15.0"))
 SKIP_INITIAL_DELAY = os.getenv("SKIP_INITIAL_DELAY", "false").lower() in ("1", "true", "yes")
 RETRY_ATTEMPTS = int(os.getenv("RETRY_ATTEMPTS", "3"))
 RETRY_BASE_DELAY = float(os.getenv("RETRY_BASE_DELAY", "2.0"))
-PAGE_TIMEOUT_MS = int(os.getenv("PAGE_TIMEOUT_MS", "30000"))
+PAGE_TIMEOUT_MS = int(os.getenv("PAGE_TIMEOUT_MS", "60000"))
 HEADLESS = os.getenv("HEADLESS", "true").lower() in ("1", "true", "yes")
 
 # Прокси (для Camoufox)

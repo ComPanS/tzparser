@@ -189,10 +189,11 @@ class KadArbitrParser(BaseCamoufoxParser):
                 document_path=document_path,
             )
         except Exception as e:
+            err_msg = str(e).split("\n")[0] if str(e) else str(type(e).__name__)
             logger.warning(
                 "Дело не найдено или ошибка парсинга %s: %s",
                 case_number,
-                e,
+                err_msg,
             )
             return KadArbitrData(
                 case_number=case_number,

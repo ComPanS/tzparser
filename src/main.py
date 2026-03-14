@@ -95,7 +95,8 @@ async def process_inn(
                     )
                 )
                 session.commit()
-            logger.info("Fedresurs: ИНН %s -> № дела %s", inn, fed_data.case_number)
+            case_display = fed_data.case_number or "номер дела не найден"
+            logger.info("Fedresurs: ИНН %s -> %s", inn, case_display)
 
             if fed_data.case_number and fed_data.case_number not in skip_kad:
                 kad_data = await kad_arbitr.parse(fed_data.case_number)
@@ -116,7 +117,8 @@ async def process_inn(
                 )
                 logger.info("Kad.arbitr: № дела %s -> %s", fed_data.case_number, doc_preview)
         except Exception as e:
-            logger.error("Ошибка при обработке ИНН %s: %s", inn, e, exc_info=True)
+            err_msg = str(e).split("\n")[0] if str(e) else str(type(e).__name__)
+            logger.error("Ошибка при обработке ИНН %s: %s", inn, err_msg)
 
 
 async def run_parser(xlsx_path: Path, resume: bool = True) -> None:

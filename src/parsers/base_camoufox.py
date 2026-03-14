@@ -83,13 +83,13 @@ class BaseCamoufoxParser:
         """Задержка (Playwright использует миллисекунды)."""
         await page.wait_for_timeout(int(seconds * 1000))
 
-    async def _wait_for_selector(self, page, selector: str, timeout: int = 30):
+    async def _wait_for_selector(self, page, selector: str, timeout: int = 60):
         """Ожидание появления элемента по CSS."""
         locator = page.locator(selector)
         await locator.wait_for(state="visible", timeout=timeout * 1000)
         return locator.first
 
-    async def _wait_for_xpath(self, page, xpath: str, timeout: int = 30):
+    async def _wait_for_xpath(self, page, xpath: str, timeout: int = 60):
         """Ожидание появления элемента по XPath."""
         locator = page.locator(f"xpath={xpath}")
         await locator.wait_for(state="visible", timeout=timeout * 1000)
@@ -151,7 +151,7 @@ class BaseCamoufoxParser:
     async def _human_type(self, page, selector: str, text: str) -> None:
         """Хаотичный ввод с задержками."""
         await self._before_action(page)
-        el = await self._wait_for_selector(page, selector, timeout=30)
+        el = await self._wait_for_selector(page, selector, timeout=60)
         if not el:
             raise ValueError(f"Элемент не найден: {selector}")
         await el.click()
@@ -163,7 +163,7 @@ class BaseCamoufoxParser:
             elif random.random() < 0.15:
                 await page.wait_for_timeout(int(random.uniform(200, 500)))
 
-    async def _click_selector(self, page, selector: str, timeout: int = 30) -> None:
+    async def _click_selector(self, page, selector: str, timeout: int = 60) -> None:
         """Клик по CSS селектору."""
         await self._before_action(page)
         el = await self._wait_for_selector(page, selector, timeout=timeout)
@@ -173,7 +173,7 @@ class BaseCamoufoxParser:
         await page.wait_for_timeout(300)
         await el.click()
 
-    async def _click_xpath(self, page, xpath: str, timeout: int = 30) -> None:
+    async def _click_xpath(self, page, xpath: str, timeout: int = 60) -> None:
         """Клик по XPath."""
         await self._before_action(page)
         el = await self._wait_for_xpath(page, xpath, timeout=timeout)
